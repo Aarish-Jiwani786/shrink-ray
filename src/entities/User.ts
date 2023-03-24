@@ -20,5 +20,4 @@ export class User {
 
   @OneToMany(() => Link, (link) => link.user)
   link: Relation<Link>[];
-
 }
