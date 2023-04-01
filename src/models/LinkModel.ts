@@ -67,12 +67,12 @@ async function allLinks(): Promise<User[]> {
 async function getLinksByUserId(userId: string): Promise<Link[]> {
   const links = await linkRepository
     .createQueryBuilder('link')
+    .leftJoinAndSelect('link.user', 'user') /* TODO: specify the relation you want to join with */
     .where({ user: { userId } }) // NOTES: This is how you do nested WHERE clauses
-    .leftJoin('link.user', 'user') /* TODO: specify the relation you want to join with */
     .select([
       'link.linkId',
       'link.originalUrl',
-      userId,
+      'user.userId',
       'user.username',
       'user.isAdmin',
       /* TODO: specify the fields you want */
@@ -86,8 +86,8 @@ async function getLinksByUserIdForOwnAccount(userId: string): Promise<Link[]> {
   // TODO: This function is pretty much the same but it should return the fields
   const links = await linkRepository
     .createQueryBuilder('link')
+    .leftJoinAndSelect('link.user', 'user') /* TODO: specify the relation you want to join with */
     .where({ user: { userId } }) // NOTES: This is how you do nested WHERE clauses
-    .leftJoin('link.user', 'user') /* TODO: specify the relation you want to join with */
     .select([
       'link.linkId',
       'link.originalUrl',
@@ -117,8 +117,8 @@ async function linkBelongsToUser(linkId: string, userId: string): Promise<boolea
 async function deleteLinks(linkId: string): Promise<void> {
   await linkRepository
     .createQueryBuilder('link')
-    .delete()
     .where('linkId = :linkId', { linkId })
+    .delete()
     .execute();
 }
 
