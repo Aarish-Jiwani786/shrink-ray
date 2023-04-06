@@ -10,9 +10,10 @@ async function registerUser(req: Request, res: Response): Promise<void> {
   // Wrap the call to `addNewUser` in a try/catch like in the sample code
   const { username, password } = req.body as NewUserRequest;
 
-  if (username) {
-    res.sendStatus(400);
-  }
+  // if (username) {
+  //   res.sendStatus(400);
+  //   return;
+  // }
 
   // Hash Password
   const passwordHash = await argon2.hash(password);
@@ -20,11 +21,12 @@ async function registerUser(req: Request, res: Response): Promise<void> {
   try {
     const newUser = await addNewUser(username, passwordHash);
     console.log(newUser);
-    res.sendStatus(201);
+    res.redirect('/login');
+    return;
   } catch (err) {
     console.error(err);
     const databaseErrorMessage = parseDatabaseError(err as Error);
-    res.sendStatus(500).json(databaseErrorMessage);
+    res.status(500).json(databaseErrorMessage);
   }
 }
 
@@ -54,7 +56,7 @@ async function logIn(req: Request, res: Response): Promise<void> {
     username,
   };
 
-  res.sendStatus(200);
+  res.redirect('/shrink');
 }
 
 export { registerUser, logIn };

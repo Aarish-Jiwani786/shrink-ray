@@ -7,13 +7,15 @@ import { registerUser, logIn } from './controllers/UserController';
 import {
   shortenUrl,
   getOriginalUrl,
-  deleteUserLinks,
-  getLinkByUser,
+  removeLink,
+  getLinks,
   getAllLinks,
 } from './controllers/LinkController';
 
 const app: Express = express();
 app.use(express.json());
+app.use(express.static('public', { extensions: ['html'] }));
+app.use(express.urlencoded({ extended: false }));
 
 const { PORT, COOKIE_SECRET } = process.env;
 
@@ -34,9 +36,9 @@ app.post('/api/users', registerUser);
 app.post('/api/login', logIn);
 app.post('/api/links', shortenUrl);
 app.get('/:targetLinkId', getOriginalUrl);
-app.get('/api/users/:targetUserId/links', getLinkByUser);
+app.get('/api/users/:targetUserId/links', getLinks);
 app.get('/api/users/allLinks', getAllLinks);
-app.delete('/api/users/:targetUserId/links/:targetLinkId', deleteUserLinks);
+app.delete('/api/users/:targetUserId/links/:targetLinkId', removeLink);
 
 app.listen(PORT, () => {
   console.log(`Listening at http://localhost:${PORT}`);

@@ -14,9 +14,14 @@ type NewLinkRequest = {
 };
 
 type targetLinkId = {
-  linkId: string;
+  targetLinkId: string;
 };
 
-type targetUserId = {
-  userId: string;
+type UserIdParam = {
+  targetUserId: string;
+};
+
+type DeleteLinkRequest = {
+  targetUserId: string;
+  targetLinkId: string;
 };

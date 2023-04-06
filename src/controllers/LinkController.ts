@@ -6,7 +6,6 @@ import {
   updateLinkVisits,
   allLinks,
   getLinksByUserId,
-  linkBelongsToUser,
   getLinksByUserIdForOwnAccount,
   deleteLinks,
 } from '../models/LinkModel';
@@ -49,6 +48,7 @@ async function shortenUrl(req: Request, res: Response): Promise<void> {
     const link = await createNewLink(originalUrl, linkId, user);
     // Respond with status 201 if the insert was successful
     res.json(link);
+    return;
   } catch (err) {
     console.error(err);
     const databaseErrorMessage = parseDatabaseError(err as Error);
@@ -58,9 +58,10 @@ async function shortenUrl(req: Request, res: Response): Promise<void> {
 
 async function getOriginalUrl(req: Request, res: Response): Promise<void> {
   // Retrieve the link data using the targetLinkId from the path parameter
-  const { linkId } = req.params as targetLinkId;
+  const { targetLinkId } = req.params as targetLinkId;
 
-  let link = await getLinkById(linkId);
+  let link = await getLinkById(targetLinkId);
+
   // Check if you got back `null`
   if (!link) {
     // send the appropriate response
@@ -83,47 +84,41 @@ async function getAllLinks(req: Request, res: Response): Promise<void> {
   res.json(links);
 }
 
-async function getLinkByUser(req: Request, res: Response): Promise<void> {
-  const { isLoggedIn } = req.session;
-  const { userId } = req.params as targetUserId;
-  const { linkId } = req.params as targetLinkId;
+async function getLinks(req: Request, res: Response): Promise<void> {
+  const { targetUserId } = req.params as UserIdParam;
 
-  const user = await getUserById(userId);
-  const owner = await linkBelongsToUser(linkId, userId);
-
-  if (!user) {
-    res.sendStatus(404);
+  let links;
+  if (!req.session.isLoggedIn || req.session.authenticatedUser.userId !== targetUserId) {
+    links = await getLinksByUserId(targetUserId);
+  } else {
+    links = await getLinksByUserIdForOwnAccount(targetUserId);
   }
 
-  if (!isLoggedIn || !owner) {
-    const links = await getLinksByUserId(userId);
-    res.json(links);
-    return;
-  }
-
-  const links = await getLinksByUserIdForOwnAccount(userId);
   res.json(links);
 }
 
-async function deleteUserLinks(req: Request, res: Response): Promise<void> {
-  const { isLoggedIn } = req.session;
-  const { userId } = req.params as targetUserId;
-
+async function removeLink(req: Request, res: Response): Promise<void> {
+  const { targetUserId, targetLinkId } = req.params as DeleteLinkRequest;
+  const { isLoggedIn, authenticatedUser } = req.session;
   if (!isLoggedIn) {
     res.sendStatus(401);
     return;
   }
 
-  const { linkId } = req.params as targetLinkId;
+  const link = await getLinkById(targetLinkId);
+  if (!link) {
+    res.sendStatus(404);
+    return;
+  }
 
-  const linkExist = await linkBelongsToUser(linkId, userId);
-
-  if (!linkExist) {
+  if (authenticatedUser.userId !== targetUserId && !authenticatedUser.isAdmin) {
     res.sendStatus(403);
     return;
   }
-  await deleteLinks(linkId);
-  res.sendStatus(204);
+
+  await deleteLinks(targetLinkId);
+
+  res.sendStatus(200);
 }
 
-export { shortenUrl, getOriginalUrl, getAllLinks, getLinkByUser, deleteUserLinks };
+export { shortenUrl, getOriginalUrl, getAllLinks, getLinks, removeLink };

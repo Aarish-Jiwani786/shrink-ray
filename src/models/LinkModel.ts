@@ -42,21 +42,11 @@ async function createNewLink(originalUrl: string, linkId: string, creator: User)
 }
 
 async function updateLinkVisits(link: Link): Promise<Link> {
-  // Increment the link's number of hits property
-  const updatedHits = link;
-  updatedHits.numHits += 1;
-  const now = new Date();
-  await linkRepository
-    .createQueryBuilder()
-    .update(link)
-    .set({ numHits: updatedHits.numHits, lastAccessedOn: now })
-    .where({ linkID: updatedHits.linkID })
-    .execute();
-
-  return updatedHits;
-  // Create a new date object and assign it to the link's `lastAccessedOn` property.
-  // Update the link's numHits and lastAccessedOn in the database
-  // return the updated link
+  const updatedLink = link;
+  updatedLink.numHits += 1;
+  updatedLink.lastAccessedOn = new Date();
+  await linkRepository.save(updatedLink);
+  return updatedLink;
 }
 
 async function allLinks(): Promise<User[]> {
@@ -92,6 +82,7 @@ async function getLinksByUserIdForOwnAccount(userId: string): Promise<Link[]> {
       'link.linkId',
       'link.originalUrl',
       'link.numHits',
+      'link.lastAccessedOn',
       'user.userId',
       'user.username',
       'user.isPro',
